@@ -9,11 +9,12 @@ public class QuestionController {
   public boolean exit = false;
   private BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 
+  // Prompts user for useCases to pick from, and handles them
   public Integer chooseUseCase() {
     // Print out questions for useCases
-    System.out
-        .print("Choose a question from 1-5" + "\n\n0 - Exit" + "\n1 - (UseCase 1) User login" + "\n2 - (UseCase 2) XXX"
-            + "\n3 - (UseCase 3) XXX" + "\n4 - (UseCase 4) XXX" + "\n5 - (UseCase 5) XXX" + "\n\nYour choice: ");
+    System.out.print("Choose a question from 1-5" + "\n\n0 - Exit" + "\n1 - (UseCase 1) User login"
+        + "\n2 - (UseCase 2) XXX" + "\n3 - (UseCase 3) Reply to post" + "\n4 - (UseCase 4) Search for posts"
+        + "\n5 - (UseCase 5) XXX" + "\n\nYour choice: ");
 
     // List of all useCases that exists in integer values
     List<Integer> useCases = new ArrayList<Integer>();
@@ -27,8 +28,7 @@ public class QuestionController {
       // Check if input was valid
       if (useCases.contains(useCase)) {
         // Return value from handling the use case (1, 0 , -1)
-        Integer result = this.handleUseCase(useCase);
-        return result;
+        return this.handleUseCase(useCase);
 
       } else { // Return -1 if invalid user input
         return -1;
@@ -40,6 +40,7 @@ public class QuestionController {
     }
   }
 
+  // Handle use cases. Returns 0 => exit, 1 => successful handling, -1 => error
   private Integer handleUseCase(Integer useCase) {
     // Initialize controllers
     DBController DBCtrl = new DBController();
@@ -89,7 +90,49 @@ public class QuestionController {
     }
     // Handle (UseCase 2 - Steven)
     // Handle (UseCase 3 - Frithjof)
+    else if (useCase == 3) {
+      // Instantiate input variables for email & password prompt
+      String postId = "";
+      String postText = "";
+
+      try {
+        // Display current users
+        System.out.println(DBCtrl.handleQuery("SELECT * FROM Post"));
+
+        // Prompt user for postId
+        System.out.print("Pick PostID: ");
+        postId = this.reader.readLine();
+
+        // Prompt user for postId
+        System.out.print("Reply: ");
+        postText = this.reader.readLine();
+
+        // Handle insert of postId
+        return DBCtrl.handlePostReply(postId, postText);
+
+      } catch (IOException e1) {
+        e1.printStackTrace();
+        return -1;
+      }
+    }
     // Handle (UseCase 4 - Frithjof)
+    else if (useCase == 4) {
+      // Instantiate input variables for email & password prompt
+      String text = "";
+
+      try {
+        // Prompt user for text
+        System.out.print("Search for Posts: ");
+        text = this.reader.readLine();
+
+        // Handle search for posts
+        return DBCtrl.handlePostSearch(text);
+
+      } catch (IOException e1) {
+        e1.printStackTrace();
+        return -1;
+      }
+    }
     // Handle (UseCase 5 - Steven)
     // Handle (Default)
     else {
@@ -98,6 +141,7 @@ public class QuestionController {
 
   }
 
+  // Prompts user for choice to exit or continue (y/n)
   public void chooseExit() {
     // Print out questions for useCases
     System.out.print("Would you like to continue? (y/n) ");

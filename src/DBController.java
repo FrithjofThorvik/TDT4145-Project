@@ -84,4 +84,153 @@ public class DBController extends DBConn {
             return -1;
         }
     }
+
+    // Handle seraching for Posts
+    public Integer handlePostSearch(String text) {
+        try {
+            String result = "";
+            String query = "SELECT PostID FROM Post WHERE Text LIKE '%" + text + "%';";
+
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery(query);
+
+            // Check if row exists, and return boolean value
+            result = this.handleResultSet(rs);
+            System.out.println(result);
+
+            // Return success if no errors
+            return 1;
+
+        } catch (Exception e) {
+            System.out.println("Error (handleUserLogin()): " + e);
+            return -1;
+        }
+    }
+
+    // Handle replying to Posts
+    public Integer handlePostReply(String postId, String postText) {
+        try {
+            // Set preset Ids
+            Integer courseId = 4145;
+            Integer userId = 2;
+
+            // Fetch respective Ids
+            Integer nextPostId = this.getNextRow("PostID", "Post");
+            Integer validPostId = this.validatePostId(postId);
+            Integer threadId = this.getThreadId(postId);
+
+            // Generate respective queries for necessary tables
+            String insertPost = "INSERT INTO Post VALUES(" + nextPostId + ", " + courseId + ", " + userId + ", '"
+                    + postText + "');";
+            String insertPostInThread = "INSERT INTO PostInThread VALUES(" + nextPostId + ", " + threadId + ", "
+                    + courseId + ");";
+            String queryPostInThread = "SELECT ThreadID, PostID, Text FROM (Post JOIN PostInThread using (PostID)) WHERE ThreadID = "
+                    + threadId + ";";
+
+            // Validate postId and nextPostId
+            if (validPostId == 1 && nextPostId > 0) {
+                try {
+                    Statement stmt = conn.createStatement();
+
+                    // Insert queries
+                    stmt.executeUpdate(insertPost);
+                    stmt.executeUpdate(insertPostInThread);
+
+                    // Print results of posts in thread
+                    System.out.println(this.handleQuery(queryPostInThread));
+
+                    // Return successfull run value
+                    return 1;
+
+                } catch (Exception e) {
+                    System.out.println("Error (handlePostReply()): " + e);
+                    return -1;
+                }
+            } else {
+                System.out.println("Invalid postID...");
+                return 1;
+            }
+
+        } catch (Exception e) {
+            System.out.println("Error (handleUserLogin()): " + e);
+            return -1;
+        }
+    }
+
+    // Get post count
+    private Integer getNextRow(String id, String table) {
+        Integer nextPostId = 0;
+        String query = "SELECT " + id + " FROM " + table + " ORDER BY " + id + " DESC;";
+
+        try {
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery(query);
+
+            // Check if row exists, and return boolean value
+            if (rs.next()) {
+                nextPostId = Integer.parseInt(rs.getString(1));
+            }
+
+            // Return validation
+            if (nextPostId > 0) {
+                return nextPostId + 1;
+            }
+            return 0;
+
+        } catch (Exception e) {
+            System.out.println("Error (getNextRow()): " + e);
+            return -1;
+        }
+    }
+
+    // Get threadId from postID
+    private Integer getThreadId(String postId) {
+        Integer threadId = 0;
+        String query = "SELECT ThreadID FROM PostInThread WHERE PostID = " + postId + ";";
+
+        try {
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery(query);
+
+            // Check if row exists, and return boolean value
+            if (rs.next()) {
+                threadId = Integer.parseInt(rs.getString(1));
+            }
+
+            // Return validation
+            if (threadId > 0) {
+                return threadId;
+            }
+            return 0;
+
+        } catch (Exception e) {
+            System.out.println("Error (getThreadId()): " + e);
+            return -1;
+        }
+    }
+
+    // Validate postId
+    private Integer validatePostId(String postId) {
+        Boolean result = false;
+        String query = "SELECT EXISTS(SELECT * FROM Post WHERE PostID='" + postId + "') AS PostExists";
+
+        try {
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery(query);
+
+            // Check if row exists, and return boolean value
+            if (rs.next()) {
+                result = rs.getBoolean(1);
+            }
+
+            // Return validation
+            if (result) {
+                return 1;
+            }
+            return 0;
+        } catch (Exception e) {
+            System.out.println("Error (handleUserLogin()): " + e);
+            return -1;
+        }
+    }
 }
