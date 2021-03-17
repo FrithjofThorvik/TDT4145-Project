@@ -12,7 +12,7 @@ public class QuestionController {
   public Integer chooseUseCase() {
     // Print out questions for useCases
     System.out
-        .print("Choose a question from 1-5" + "\n0 - Exit" + "\n1 - (UseCase 1) User login" + "\n2 - (UseCase 2) XXX"
+        .print("Choose a question from 1-5" + "\n\n0 - Exit" + "\n1 - (UseCase 1) User login" + "\n2 - (UseCase 2) XXX"
             + "\n3 - (UseCase 3) XXX" + "\n4 - (UseCase 4) XXX" + "\n5 - (UseCase 5) XXX" + "\n\nYour choice: ");
 
     // List of all useCases that exists in integer values
@@ -27,7 +27,8 @@ public class QuestionController {
       // Check if input was valid
       if (useCases.contains(useCase)) {
         // Return value from handling the use case (1, 0 , -1)
-        return this.handleUseCase(useCase);
+        Integer result = this.handleUseCase(useCase);
+        return result;
 
       } else { // Return -1 if invalid user input
         return -1;
@@ -76,7 +77,7 @@ public class QuestionController {
           return 1;
         } else if (userAuth == 0) {
           System.out.println("User not authenticated!");
-          return 0;
+          return 1;
         } else {
           return -1;
         }
@@ -86,7 +87,10 @@ public class QuestionController {
         return -1;
       }
     }
-    // Handle (UseCase 2)
+    // Handle (UseCase 2 - Steven)
+    // Handle (UseCase 3 - Frithjof)
+    // Handle (UseCase 4 - Frithjof)
+    // Handle (UseCase 5 - Steven)
     // Handle (Default)
     else {
       return -1;
@@ -95,16 +99,13 @@ public class QuestionController {
   }
 
   public void chooseExit() {
-    // Create a Buffered Reader for reading input from user in terminal
-    BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-
     // Print out questions for useCases
     System.out.print("Would you like to continue? (y/n) ");
 
     try {
       // Get user input and parse into Integer
       String choice;
-      choice = reader.readLine();
+      choice = this.reader.readLine();
 
       // Check if input was valid
       if (choice.equals("n")) {

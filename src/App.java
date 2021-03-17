@@ -21,7 +21,7 @@ public class App {
                         // Set exit value to true
                         QuestionCtrl.exit = true;
 
-                    } else if (useCase != 1) {
+                    } else if (useCase == 1) {
                         // Prompt user to continue or not
                         QuestionCtrl.chooseExit();
 
