@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.*;
 
+//This class is responsible for the textual user interface, whilst also prompting the user for input and then passing the related queries to the DBController
 public class QuestionController {
   public boolean exit = false;
   private BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
@@ -13,8 +14,8 @@ public class QuestionController {
   public Integer chooseUseCase() {
     // Print out questions for useCases
     System.out.print("Choose a question from 1-5" + "\n\n0 - Exit" + "\n1 - (UseCase 1) User login"
-        + "\n2 - (UseCase 2) XXX" + "\n3 - (UseCase 3) Reply to post" + "\n4 - (UseCase 4) Search for posts"
-        + "\n5 - (UseCase 5) XXX" + "\n\nYour choice: ");
+        + "\n2 - (UseCase 2) Make a post" + "\n3 - (UseCase 3) Reply to post" + "\n4 - (UseCase 4) Search for posts"
+        + "\n5 - (UseCase 5) Get statistics" + "\n\nYour choice: ");
 
     // List of all useCases that exists in integer values
     List<Integer> useCases = new ArrayList<Integer>();
@@ -42,8 +43,10 @@ public class QuestionController {
 
   // Handle use cases. Returns 0 => exit, 1 => successful handling, -1 => error
   private Integer handleUseCase(Integer useCase) {
-    // Initialize controllers
+    // Initialize controllers, the controller is responsible for quering the
+    // database (and establishing a connection with the database)
     DBController DBCtrl = new DBController();
+    SupportFunctions SprtFunc = new SupportFunctions();
 
     // Handle (UseCase 0)
     if (useCase == 0) {
@@ -59,7 +62,7 @@ public class QuestionController {
 
       try {
         // Display current users
-        System.out.println(DBCtrl.handleQuery("SELECT * FROM user"));
+        System.out.println(SprtFunc.handleQuery("SELECT * FROM user"));
 
         // Prompt user for email
         System.out.print("Email: ");
@@ -88,16 +91,45 @@ public class QuestionController {
         return -1;
       }
     }
-    // Handle (UseCase 2 - Steven)
-    // Handle (UseCase 3 - Frithjof)
+    // Handle (UseCase 2)
+    else if (useCase == 2) {
+      // Instantiate input variables
+      String post = "";
+      String folder = "";
+      String tag = "";
+
+      try {
+        // Prompt user to write a post
+        System.out.print("Write your post: ");
+        post = this.reader.readLine();
+
+        // Prompt user to choose folder
+        System.out.print("Choose folder: ");
+        folder = this.reader.readLine();
+
+        // Prompt user to pick a tag
+        System.out.print("Pick a tag: ");
+        tag = this.reader.readLine();
+
+        // Handle creation of a new post, within the chosen folder and with the chosen
+        // tag
+        return DBCtrl.handleMakePost(post, folder, tag);
+
+      } catch (IOException e1) {
+        e1.printStackTrace();
+        return -1;
+      }
+    }
+    // Handle (UseCase 3)
     else if (useCase == 3) {
-      // Instantiate input variables for email & password prompt
+      // Instantiate input variables
       String postId = "";
       String postText = "";
 
       try {
         // Display current users
-        System.out.println(DBCtrl.handleQuery("SELECT * FROM Post"));
+        System.out.println(SprtFunc.handleQuery(
+            "SELECT Post.PostId, Post.UserID, Text FROM Post join PostInThread using (PostID, CourseID) where ThreadID in ( select ThreadID from ThreadFolder where FolderID='1' )"));
 
         // Prompt user for postId
         System.out.print("Pick PostID: ");
@@ -107,7 +139,7 @@ public class QuestionController {
         System.out.print("Reply: ");
         postText = this.reader.readLine();
 
-        // Handle insert of postId
+        // Handle insert th reply post
         return DBCtrl.handlePostReply(postId, postText);
 
       } catch (IOException e1) {
@@ -115,9 +147,9 @@ public class QuestionController {
         return -1;
       }
     }
-    // Handle (UseCase 4 - Frithjof)
+    // Handle (UseCase 4)
     else if (useCase == 4) {
-      // Instantiate input variables for email & password prompt
+      // Instantiate input variables
       String text = "";
 
       try {
@@ -133,7 +165,19 @@ public class QuestionController {
         return -1;
       }
     }
-    // Handle (UseCase 5 - Steven)
+    // Handle (UseCase 5)
+    else if (useCase == 5) {
+
+      try {
+        // This usecase doesn't require any user input
+        System.out.print("Statistics for each user: \n");
+        // Handle getting the statistics
+        return DBCtrl.handleGetStatistics();
+
+      } catch (Exception e) {
+        return -1;
+      }
+    }
     // Handle (Default)
     else {
       return -1;

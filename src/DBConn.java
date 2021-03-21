@@ -2,14 +2,14 @@ package src;
 
 import java.sql.*;
 import java.util.Properties;
-
+//This an abstract class that handles connection with the database
 public abstract class DBConn {
     protected Connection conn;
 
     final private String host = "//127.0.0.1:3306"; // Set hostname for your MySQL Workbench connection
     final private String username = "root"; // Set username for your MySQL Workbench connection
-    final private String password = "Pwm10y10s98d!"; // Set password for your MySQL Workbench connection
-    final private String schema = "databaseproject"; // Change if your MySQL schema has a different name
+    final private String password = "root"; // Set password for your MySQL Workbench connection
+    final private String schema = "db1"; // Change if your MySQL schema has a different name
 
     public DBConn() {
     }

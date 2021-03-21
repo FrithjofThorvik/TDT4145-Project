@@ -2,64 +2,18 @@ package src;
 
 import java.sql.*;
 
+//This class is responsible for connecting to the database (by inheriting from DBConn), 
+//it is also responsible for quering the database with the relevant user input accuired from the Question controller. 
 public class DBController extends DBConn {
-    private String border = "===================================================================================\n";
-
+    SupportFunctions SprtFunc = new SupportFunctions(); // Call functions from this class to make the DBController less
+                                                        // convoluted
     // Constructor for establishing connection to database
+
     public DBController() {
         this.connect();
     }
 
-    // Prints a query made to the connected database
-    public String handleQuery(String query) {
-        try {
-            Statement stmt = conn.createStatement();
-
-            ResultSet rs = stmt.executeQuery(query);
-
-            // Return a formatted version of the query request
-            return this.handleResultSet(rs);
-
-        } catch (Exception e) {
-            return "Error (handleQuery()): " + e;
-        }
-    }
-
-    // Prints a formatted version of a MySQL ResultSet
-    private String handleResultSet(ResultSet rs) {
-        try {
-            String columns = "";
-            String result = "";
-            ResultSetMetaData rsmd = rs.getMetaData(); // Prepare meta data from result set
-            Boolean firstRow = true;
-
-            // Loop through resultSet
-            while (rs.next()) {
-                // Loop through the current resultSet (row)
-                for (int i = 1; i <= rsmd.getColumnCount(); i++) {
-                    if (firstRow) { // Print column names if first run in loop
-                        columns += rsmd.getColumnName(i) + "\t\t";
-                    }
-
-                    // Print column values in rows
-                    result += rs.getString(i) + "\t\t";
-
-                }
-                firstRow = false;
-
-                // Break line for new row
-                result += "\n";
-            }
-
-            return this.border + columns + "\n" + result + border;
-
-        } catch (Exception e) {
-            System.out.println("Error (handleResultSet()): " + e);
-            return "";
-        }
-    }
-
-    // Handles user login
+    // Handles user login (USECASE 1)
     public Integer handleUserLogin(String email, String password) {
         try {
             Boolean result = false;
@@ -85,29 +39,86 @@ public class DBController extends DBConn {
         }
     }
 
-    // Handle seraching for Posts
-    public Integer handlePostSearch(String text) {
+    // Handle making a post (USECASE 2)
+    public Integer handleMakePost(String postText, String folder, String tag) {
         try {
-            String result = "";
-            String query = "SELECT PostID FROM Post WHERE Text LIKE '%" + text + "%';";
+            // Set preset Ids
+            Integer courseId = 4145;
+            Integer userId = 2;
 
-            Statement stmt = conn.createStatement();
-            ResultSet rs = stmt.executeQuery(query);
+            // Fetch respective Ids
+            Integer nextPostId = SprtFunc.getNextRow("PostID", "Post");
+            Integer folderID = SprtFunc.getFolderID(folder);
+            Integer tagID = SprtFunc.getTagID(tag);
 
-            // Check if row exists, and return boolean value
-            result = this.handleResultSet(rs);
-            System.out.println(result);
+            // Set the threadID to be the same as the postID
+            Integer threadId = nextPostId;
 
-            // Return success if no errors
-            return 1;
+            // Create post query strings
+            String insertPost = "INSERT INTO Post VALUES(" + nextPostId + ", " + courseId + ", " + userId + ", '"
+                    + postText + "');";
+            String insertThread = "INSERT INTO Thread VALUES(" + threadId + ", " + courseId + ");";
+            String insertPostInThread = "INSERT INTO PostInThread VALUES(" + nextPostId + ", " + threadId + ", "
+                    + courseId + ");";
+
+            // Query string to make the post belong to the inputted folder
+            String insertThreadFolder = "INSERT INTO ThreadFolder VALUES(" + folderID + ", " + threadId + ", "
+                    + courseId + ");";
+
+            // Query string to make the post have the inputted tag
+            String insertPostTag = "INSERT INTO PostTag VALUES(" + nextPostId + ", " + courseId + ", " + tagID + ");";
+
+            // Query string to fetch the newly created post -> too see that it was created
+            // succesfully
+            String queryPostInThread = "SELECT ThreadID, Post.TEXT from (Thread join ThreadFolder using (ThreadID, CourseID)) join Post on (Post.PostID=Thread.ThreadID) where ThreadID in(select ThreadID from ThreadFolder join Folder using (FolderID, CourseID) where Name='"
+                    + folder
+                    + "') AND ThreadID in (select PostID as ThreadID from PostTag natural join Tag where Name='" + tag
+                    + "');";
+
+            // Validate nextPostId
+            if (nextPostId > 0) {
+                try {
+                    Statement stmt = conn.createStatement();
+
+                    // Insert queries
+                    stmt.executeUpdate(insertPost);
+                    stmt.executeUpdate(insertThread);
+                    stmt.executeUpdate(insertPostInThread);
+
+                    // Check if the user inputted value for folder and tag exists
+                    if (folderID > 0 && tagID > 0) {
+                        // Execute the insert queries to make the post within the user inputted folder
+                        // and tag
+                        stmt.executeUpdate(insertThreadFolder);
+                        stmt.executeUpdate(insertPostTag);
+
+                        // Print results of posts in thread -> To check that everything was executed
+                        // correctly
+                        System.out.println("\nThese are the ThreadIDs of all post matching the choosen folder and tag:");
+                        System.out.println(SprtFunc.handleQuery(queryPostInThread));
+                    } else {
+                        System.out.println("Folder or Tag does not exist");
+                    }
+
+                    // Return successfull run value
+                    return 1;
+
+                } catch (Exception e) {
+                    System.out.println("Error (handleMakePost()): " + e);
+                    return -1;
+                }
+            } else {
+                System.out.println("Invalid postID...");
+                return 1;
+            }
 
         } catch (Exception e) {
-            System.out.println("Error (handleUserLogin()): " + e);
+            System.out.println("Error (handleMakePost()): " + e);
             return -1;
         }
     }
 
-    // Handle replying to Posts
+    // Handle replying to Posts (USECASE 3)
     public Integer handlePostReply(String postId, String postText) {
         try {
             // Set preset Ids
@@ -115,9 +126,9 @@ public class DBController extends DBConn {
             Integer userId = 2;
 
             // Fetch respective Ids
-            Integer nextPostId = this.getNextRow("PostID", "Post");
-            Integer validPostId = this.validatePostId(postId);
-            Integer threadId = this.getThreadId(postId);
+            Integer nextPostId = SprtFunc.getNextRow("PostID", "Post");
+            Integer validPostId = SprtFunc.validatePostId(postId);
+            Integer threadId = SprtFunc.getThreadId(postId);
 
             // Generate respective queries for necessary tables
             String insertPost = "INSERT INTO Post VALUES(" + nextPostId + ", " + courseId + ", " + userId + ", '"
@@ -132,12 +143,13 @@ public class DBController extends DBConn {
                 try {
                     Statement stmt = conn.createStatement();
 
-                    // Insert queries
+                    // Execute the insert queries
                     stmt.executeUpdate(insertPost);
                     stmt.executeUpdate(insertPostInThread);
 
-                    // Print results of posts in thread
-                    System.out.println(this.handleQuery(queryPostInThread));
+                    // Print results of posts in thread (so you can see that the reply was created
+                    // in the database)
+                    System.out.println(SprtFunc.handleQuery(queryPostInThread));
 
                     // Return successfull run value
                     return 1;
@@ -157,79 +169,47 @@ public class DBController extends DBConn {
         }
     }
 
-    // Get post count
-    private Integer getNextRow(String id, String table) {
-        Integer nextPostId = 0;
-        String query = "SELECT " + id + " FROM " + table + " ORDER BY " + id + " DESC;";
-
+    // Handle seraching for Posts (USECASE 4)
+    public Integer handlePostSearch(String text) {
         try {
+            String result = "";
+            String query = "SELECT PostID FROM Post WHERE Text LIKE '%" + text + "%';";
+
             Statement stmt = conn.createStatement();
             ResultSet rs = stmt.executeQuery(query);
 
             // Check if row exists, and return boolean value
-            if (rs.next()) {
-                nextPostId = Integer.parseInt(rs.getString(1));
-            }
+            result = SprtFunc.handleResultSet(rs);
+            System.out.println(result);
 
-            // Return validation
-            if (nextPostId > 0) {
-                return nextPostId + 1;
-            }
-            return 0;
+            // Return success if no errors
+            return 1;
 
-        } catch (Exception e) {
-            System.out.println("Error (getNextRow()): " + e);
-            return -1;
-        }
-    }
-
-    // Get threadId from postID
-    private Integer getThreadId(String postId) {
-        Integer threadId = 0;
-        String query = "SELECT ThreadID FROM PostInThread WHERE PostID = " + postId + ";";
-
-        try {
-            Statement stmt = conn.createStatement();
-            ResultSet rs = stmt.executeQuery(query);
-
-            // Check if row exists, and return boolean value
-            if (rs.next()) {
-                threadId = Integer.parseInt(rs.getString(1));
-            }
-
-            // Return validation
-            if (threadId > 0) {
-                return threadId;
-            }
-            return 0;
-
-        } catch (Exception e) {
-            System.out.println("Error (getThreadId()): " + e);
-            return -1;
-        }
-    }
-
-    // Validate postId
-    private Integer validatePostId(String postId) {
-        Boolean result = false;
-        String query = "SELECT EXISTS(SELECT * FROM Post WHERE PostID='" + postId + "') AS PostExists";
-
-        try {
-            Statement stmt = conn.createStatement();
-            ResultSet rs = stmt.executeQuery(query);
-
-            // Check if row exists, and return boolean value
-            if (rs.next()) {
-                result = rs.getBoolean(1);
-            }
-
-            // Return validation
-            if (result) {
-                return 1;
-            }
-            return 0;
         } catch (Exception e) {
             System.out.println("Error (handleUserLogin()): " + e);
+            return -1;
+        }
+    }
+
+    // Handle getting statistics (USECASE 5)
+    public Integer handleGetStatistics() {
+        try {
+
+            // Query string to fetch the newly created post
+            String queryStatistics = "SELECT Email, sum(NumberRead) as NumberRead , sum(NumberCreated) as NumberCreated from( SELECT Email, NumberRead , NumberCreated from( (Select Email, count(PostViewer.PostID) as NumberRead, NULL as NumberCreated from User left outer join PostViewer using (UserID) group by  User.UserID) UNION (Select Email, NULL, count(Post.PostID) as NumberCreated from User left outer join Post using (UserID) group by User.UserID) )as T1 )as T2 group by Email order by NumberRead DESC;";
+            try {
+                // Print results of statistics
+                System.out.println(SprtFunc.handleQuery(queryStatistics));
+
+                // Return successfull run value
+                return 1;
+
+            } catch (Exception e) {
+                System.out.println("Error (handleGetStatistics(): " + e);
+                return -1;
+            }
+        } catch (Exception e) {
+            System.out.println("Error (handleGetStatistics(): " + e);
             return -1;
         }
     }
