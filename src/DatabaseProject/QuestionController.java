@@ -1,4 +1,4 @@
-package src;
+package DatabaseProject;
 
 import java.io.BufferedReader;
 import java.io.IOException;

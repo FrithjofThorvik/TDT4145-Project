@@ -1,4 +1,4 @@
-package src;
+package DatabaseProject;
 
 import java.sql.*;
 
@@ -94,7 +94,8 @@ public class DBController extends DBConn {
 
                         // Print results of posts in thread -> To check that everything was executed
                         // correctly
-                        System.out.println("\nThese are the ThreadIDs of all post matching the choosen folder and tag:");
+                        System.out
+                                .println("\nThese are the ThreadIDs of all post matching the choosen folder and tag:");
                         System.out.println(SprtFunc.handleQuery(queryPostInThread));
                     } else {
                         System.out.println("Folder or Tag does not exist");

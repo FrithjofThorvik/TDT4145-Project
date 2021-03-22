@@ -1,4 +1,4 @@
-package src;
+package DatabaseProject;
 
 public class App {
     /**

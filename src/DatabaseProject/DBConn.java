@@ -1,7 +1,8 @@
-package src;
+package DatabaseProject;
 
 import java.sql.*;
 import java.util.Properties;
+
 //This an abstract class that handles connection with the database
 public abstract class DBConn {
     protected Connection conn;
